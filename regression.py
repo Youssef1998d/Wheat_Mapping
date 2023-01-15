@@ -27,8 +27,10 @@ def explicate(X, Y, degree_ = 1):
     d_dx = FinDiff(0, X[1] - X[0], 1)
     der = d_dx(poly)
 
-    return X, Y, poly, der
+    return np.mean(poly), np.mean(der)
 
-def generate_functions(X, Y, degree=2):
+def generate_explications(X, Y, degree=2):
     for y in Y:
         yield explicate(degree, X, y)
+    
+generate_explications([1, 2, 3, 4], observations)

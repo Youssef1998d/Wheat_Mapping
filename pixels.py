@@ -14,7 +14,7 @@ def get_E_ndvi():
         for year in years:
             src = rasterio.open(path+year+'/'+month+'_'+year+'.tiff')
             arr = src.read(1)
-            if np.nan in arr:
+            if np.count_nonzero(np.isnan(arr))<len(arr):
                 print("COULD NOT RESOLVE FOR : ", month+'_'+year+'.tiff')
                 continue
             else:
