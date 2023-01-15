@@ -1,6 +1,5 @@
 import rasterio
 import numpy as np
-import os
 
 path = "C:/Users/lenovo/Desktop/Assets/NDVI/Wheat_Mapping/data_ndvi_images/data_ndvi_images/"
 
@@ -22,6 +21,8 @@ def get_E_ndvi():
                 new += arr
         yield np.append(E_ndvi, new/len(years))
 
-june, july, august, september = [x for x in get_E_ndvi()][4:]
-    
-observations = np.array([np.array([june[i], july[i], august[i], september[i]]) for i in range(262144)])
+def generate_observation(months):
+    for i in range(262144):
+        yield np.array([month[i] for month in months])
+
+observations = generate_observation([x for x in get_E_ndvi()][4:])
