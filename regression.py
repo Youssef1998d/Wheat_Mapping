@@ -1,29 +1,34 @@
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-from random import random
+from sklearn.preprocessing import PolynomialFeatures
+import matplotlib.pyplot as plt
 from findiff import FinDiff
 import numpy as np
-import math
+from pixels import observations
 
-# Calcul des estimateurs des paramètres alpha et beta
-beta = lambda x, y: np.cov(x,y)[0][1]/np.var(x)
-alpha = lambda x, y: np.mean(y) - beta(x, y)*np.mean(x)
+def compare(X, v): 
+    fig = plt.figure(1)
+    fig.subplots_adjust(hspace=0.4, top=0.85)
+    fig.suptitle("Comparaison des fonctions Yi")
+    ax, type = [], ("Regression Linéaire Simple", "Reression Polynomiale", "Les Nombres Dérivées")
+    for i in range(len(v)*3):
+        ax.append(fig.add_subplot(len(v),3,i))
+        ax[i].set_title(type[i%3])
+        ax[i].plot(X, v[i%3][i%3]) 
+    plt.show()
 
-# Sum of squared errors function
-d = lambda x,y: sum([(x[i]-y[i])**2 for i in range(12)])
-
-def reg(X = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]), Y1 = np.array([random()*2 for i in range(12)]), Y2 = np.array([random()*2 for i in range(12)])):
-    # Création des deux fonctions f1 et f2 alpha + beta * Xi de la regression simple
-    f1 = lambda x:alpha(X, Y1) + beta(X, Y1)*x
-    f2 = lambda x:alpha(X, Y2) + beta(X, Y2)*x
+def explicate(X, Y, degree_ = 1):
+ 
+    poly_reg = PolynomialFeatures(degree = degree_)
+    X_poly = poly_reg.fit_transform(np.array(X).reshape(-1, 1))
     
-    
-    dx1 = 1
-    d_dx1 = FinDiff(0, dx1, 1)
-    result_f1 = d_dx1(f1(X))
-    result_f2 = d_dx1(f2(X))
-    print(result_f1[0], result_f2[0])
-    
-    return 0
+    lin_reg_1=LinearRegression().fit(X_poly, Y)
+    poly = lin_reg_1.predict(X_poly)
 
-reg()
+    d_dx = FinDiff(0, X[1] - X[0], 1)
+    der = d_dx(poly)
+
+    return X, Y, poly, der
+
+def generate_functions(X, Y, degree=2):
+    for y in Y:
+        yield explicate(degree, X, y)
