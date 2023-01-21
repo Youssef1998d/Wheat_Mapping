@@ -5,13 +5,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-path = "C:/Users/lenovo/Desktop/Assets/NDVI/Wheat_Mapping/data_ndvi_images/data_ndvi_images/"
+path = "C:/Users/lenovo/Desktop/Assets/NDVI/Wheat_Mapping/data_ndvi_images/data_ndvi_images/zimbabwe/"
 
-years = ["2017", "2018", "2021", "2022"]
-months = [str(i) for i in (4, 5, 6, 7, 8, 9)]
+years = ["2018", "2019", "2020", "2021"]
+months = [str(i) for i in (5, 6, 7, 8, 9)]
 colors = [(255, 0, 0), (240, 50, 0), (200, 100, 0), (255, 200, 0), (0, 255, 0), (0, 55, 200), (0, 0, 255), (0,0,100), (0,0,0)]
 def get_E_ndvi( moment=1):
-
+    """
+    Cette fonction lit des images tiff contenant les valeurs ndvi de chaque mois sur plusieurs années 
+    Elle calculera pour chaque mois donnée la moyenne de ce mois pour finir avec une matrice moyenne de chaque mois, noté new
+    On va alors disposer 6 matrices moyennes, chaque matrice represente la tendance moyenne d'un mois donnée
+    Si le moment souhaité est le 1ér (Moyenne): 
+        > La fonction retournera une matrice de m colonnes (nombre de mois) et l lignes (nb pixels) 
+        contanant la moyenne de chaque pixels sur chaque mois pour les nombre des années.
+    Si le moment souhaité est le 2ème (variance), la fonction prendra les m matrices moyennes et calculera somme((Xi-E(X))^2)/N 
+        > La fonction retournera une matrice de m colonnes (m nombre de mois) et l lignes (l nombre de pixels) avec pour chaque pixels, 
+            on l'accorde la variance associé a chaque mois sur les années (observations)
+    Si le moment souhaité est le 3ème (Skewness), la fonction calculera la matrice Somme((Xi-E(X))^3)/sd^3*(N-1) (N est le nombre des années, Xi sont les observations d'un mois sur des années, X est la moyenne des observations)
+        > La fonction retournera une matrice qui contient le skewness associé da chaque pixels de chaque mois sur les observations des années
+    """
     values = np.array([]) # le tableau qui va contenir les distances
     result = np.array([]) # le tableau qui va contenir le moment de tout les pixels 
 
@@ -20,7 +32,7 @@ def get_E_ndvi( moment=1):
     # parcourir chaque mois pour en obtenir lemoment associé
 
     for month in months:        
-        if moment ==2:
+        if moment ==2 or moment==3 or moment==4:
             ob = np.array([])
         # création du matrice qui va contenir les moments de chaques mois                  
         new = np.array([])         
@@ -31,7 +43,7 @@ def get_E_ndvi( moment=1):
 
             # arr va contenir la matrice spécifique a un mois pour plusieurs années lors des itérations
             arr = src.read(1)
-            if moment==2:
+            if moment==2 or moment==3 or moment ==4:
 
                 # Si il s'agit du calcul du 2ème moment, on enregistre les observations de l'année 
                 # de chaque mois dans ob
@@ -64,7 +76,7 @@ def get_E_ndvi( moment=1):
         
         elif moment==2:
 
-            #s'il s'agit d'un caclul du 2ème moment
+            # on calcul la variance
             new = new.flatten()
             ob = ob.transpose()
             mean = np.repeat(new[np.newaxis, :],len(years), axis=0 )
@@ -75,9 +87,39 @@ def get_E_ndvi( moment=1):
                 result=np.array(np.sum(s, axis=1))
             else:
                 result = np.vstack((result, np.sum(s, axis=1)))
+        elif moment==3:
+
+            # on calcul Skewness
+            new = new.flatten()
+            ob = ob.transpose()
+            mean = np.repeat(new[np.newaxis, :],len(years), axis=0 )
+            mean = mean.transpose()
+            s = np.sum((ob-mean)**2/len(years), axis=1)
+            sd = np.sqrt(s)
+            print("s",s, "\nsd", sd**3 * len(years)-1)
+            skew = np.sum((ob-mean)**3, axis=1)/(len(years)-1)*sd**3
+            if len(result)==0:
+                result=np.array(skew)
+            else:
+                result = np.vstack((result, skew))
+        elif moment==4:
+    
+            # on calcul kurtosis
+            new = new.flatten()
+            ob = ob.transpose()
+            mean = np.repeat(new[np.newaxis, :],len(years), axis=0 )
+            mean = mean.transpose()
+            s = np.sum((ob-mean)**4, axis=1)
+            st = np.sum((ob-mean**2)**2, axis=1)
+            kurtosis = (s/st)*len(years)
+            if len(result)==0:
+                result=np.array(kurtosis)
+            else:
+                result = np.vstack((result, kurtosis))
+
     
     values = result.transpose()
-    return values
+    return values, values.max(), values.min()
 
 d = lambda moment, ref:np.linalg.norm(moment - ref, axis=1)
 
@@ -116,7 +158,7 @@ def generate_colors(colors_range, momentum, ref=np.array([0,0,0,0,0,0])):
     return result
 
 
-arr = d(get_E_ndvi(2), np.array([0,0,0,0,0,0])).reshape(856,1089)
+arr = d(get_E_ndvi(2)[0], np.array([0.0584 for v in range(5)])).reshape(856,1089)
 fig, ax = plt.subplots()
 plot_bands(arr, cmap='rainbow', ax=ax)
 plt.show()
