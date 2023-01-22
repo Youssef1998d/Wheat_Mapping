@@ -10,7 +10,7 @@ path = "C:/Users/lenovo/Desktop/Assets/NDVI/Wheat_Mapping/data_ndvi_images/data_
 years = ["2018", "2019", "2020", "2021"]
 months = [str(i) for i in (5, 6, 7, 8, 9)]
 colors = [(255, 0, 0), (240, 50, 0), (200, 100, 0), (255, 200, 0), (0, 255, 0), (0, 55, 200), (0, 0, 255), (0,0,100), (0,0,0)]
-def get_E_ndvi( moment=1):
+def get_E_ndvi(all=False, moment=1):
     """
     Cette fonction lit des images tiff contenant les valeurs ndvi de chaque mois sur plusieurs années 
     Elle calculera pour chaque mois donnée la moyenne de ce mois pour finir avec une matrice moyenne de chaque mois, noté new
@@ -26,7 +26,7 @@ def get_E_ndvi( moment=1):
     """
     values = np.array([]) # le tableau qui va contenir les distances
     result = np.array([]) # le tableau qui va contenir le moment de tout les pixels 
-
+    mean = np.array([])
 
 
     # parcourir chaque mois pour en obtenir lemoment associé
@@ -43,7 +43,7 @@ def get_E_ndvi( moment=1):
 
             # arr va contenir la matrice spécifique a un mois pour plusieurs années lors des itérations
             arr = src.read(1)
-            if moment==2 or moment==3 or moment ==4:
+            if (moment==2 or moment==3 or moment ==4):
 
                 # Si il s'agit du calcul du 2ème moment, on enregistre les observations de l'année 
                 # de chaque mois dans ob
@@ -65,7 +65,7 @@ def get_E_ndvi( moment=1):
         
         # après avoir itérer toutes les années d'un mois donnée, on calcul le moment   
         
-        # new va contenir la moyenne de chaque observation d'un mois itéré sur 4 années    
+        # new va contenir la moyenne de chaque observation d'un mois parcouru sur les années    
         new = np.array(new/len(years))
         
         if moment==1:
@@ -119,7 +119,16 @@ def get_E_ndvi( moment=1):
 
     
     values = result.transpose()
-    return values, values.max(), values.min()
+    if moment==1 and all:
+        values = np.sum(values, axis=1)/len(months)
+    elif moment==2 and all: 
+        values = np.sum((get_E_ndvi(False, 1)[0]-np.repeat(get_E_ndvi(True, 1)[0][np.newaxis, :],len(months), axis=0).transpose())**2, axis=1)
+    elif moment==3 and all:
+        pass
+    elif moment==4 and all:
+        pass
+
+    return values, values.max(), values.min(), len(values)
 
 d = lambda moment, ref:np.linalg.norm(moment - ref, axis=1)
 
@@ -158,9 +167,10 @@ def generate_colors(colors_range, momentum, ref=np.array([0,0,0,0,0,0])):
     return result
 
 
-arr = d(get_E_ndvi(2)[0], np.array([0.0584 for v in range(5)])).reshape(856,1089)
-fig, ax = plt.subplots()
-plot_bands(arr, cmap='rainbow', ax=ax)
-plt.show()
+#arr = d(get_E_ndvi(1)[0], np.array([0.0584 for v in range(5)])).reshape(856,1089)
+print(get_E_ndvi(True, 2))
+#fig, ax = plt.subplots()
+#plot_bands(arr, cmap='rainbow', ax=ax)
+#plt.show()
 
 
