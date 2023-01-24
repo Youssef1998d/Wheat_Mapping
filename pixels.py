@@ -96,7 +96,7 @@ def get_E_ndvi(all=False, moment=1):
             mean = mean.transpose()
             s = np.sum((ob-mean)**2/len(years), axis=1)
             sd = np.sqrt(s)
-            print("s",s, "\nsd", sd**3 * len(years)-1)
+            #print("s",s, "\nsd", sd**3 * len(years)-1)
             skew = np.sum((ob-mean)**3, axis=1)/(len(years)-1)*sd**3
             if len(result)==0:
                 result=np.array(skew)
@@ -122,11 +122,11 @@ def get_E_ndvi(all=False, moment=1):
     if moment==1 and all:
         values = np.sum(values, axis=1)/len(months)
     elif moment==2 and all: 
-        values = np.sum((get_E_ndvi(False, 1)[0]-np.repeat(get_E_ndvi(True, 1)[0][np.newaxis, :],len(months), axis=0).transpose())**2, axis=1)
+        values = np.sum((get_E_ndvi(False, 1)[0]-np.repeat(get_E_ndvi(True, 1)[0][np.newaxis, :],len(months), axis=0).transpose())**2, axis=1)/len(months)
     elif moment==3 and all:
-        pass
+        values = np.sum((get_E_ndvi(False, 1)[0]-np.repeat(get_E_ndvi(True, 1)[0][np.newaxis, :],len(months), axis=0).transpose())**3, axis=1)/(len(months)-1)*(np.sqrt(get_E_ndvi(True, 2)[0])**3) #np.sqrt(get_E_ndvi(True, 2))
     elif moment==4 and all:
-        pass
+        values = len(months)*2*(get_E_ndvi(True, 2)[0]**2)/(np.sum((get_E_ndvi(False, 1)[0]-np.repeat(get_E_ndvi(True, 1)[0][np.newaxis, :],len(months), axis=0).transpose()**2)**2, axis=1))
 
     return values, values.max(), values.min(), len(values)
 
@@ -168,7 +168,7 @@ def generate_colors(colors_range, momentum, ref=np.array([0,0,0,0,0,0])):
 
 
 #arr = d(get_E_ndvi(1)[0], np.array([0.0584 for v in range(5)])).reshape(856,1089)
-print(get_E_ndvi(True, 2))
+print(get_E_ndvi(True, 4))
 #fig, ax = plt.subplots()
 #plot_bands(arr, cmap='rainbow', ax=ax)
 #plt.show()
