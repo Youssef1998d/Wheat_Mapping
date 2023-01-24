@@ -15,14 +15,28 @@ def get_E_ndvi(all=False, moment=1):
     Cette fonction lit des images tiff contenant les valeurs ndvi de chaque mois sur plusieurs années 
     Elle calculera pour chaque mois donnée la moyenne de ce mois pour finir avec une matrice moyenne de chaque mois, noté new
     On va alors disposer 6 matrices moyennes, chaque matrice represente la tendance moyenne d'un mois donnée
-    Si le moment souhaité est le 1ér (Moyenne): 
-        > La fonction retournera une matrice de m colonnes (nombre de mois) et l lignes (nb pixels) 
-        contanant la moyenne de chaque pixels sur chaque mois pour les nombre des années.
-    Si le moment souhaité est le 2ème (variance), la fonction prendra les m matrices moyennes et calculera somme((Xi-E(X))^2)/N 
-        > La fonction retournera une matrice de m colonnes (m nombre de mois) et l lignes (l nombre de pixels) avec pour chaque pixels, 
-            on l'accorde la variance associé a chaque mois sur les années (observations)
-    Si le moment souhaité est le 3ème (Skewness), la fonction calculera la matrice Somme((Xi-E(X))^3)/sd^3*(N-1) (N est le nombre des années, Xi sont les observations d'un mois sur des années, X est la moyenne des observations)
-        > La fonction retournera une matrice qui contient le skewness associé da chaque pixels de chaque mois sur les observations des années
+    
+    1) Si on veut les moments sur chaque mois par rapport aux années, le 1er paramètre all=False et:
+        
+        1 Si le moment souhaité est le 1ér (Moyenne):
+            > La fonction retournera une matrice de m colonnes (nombre de mois) et l lignes (nb pixels) 
+            contanant la moyenne de chaque pixels sur chaque mois pour les nombre des années.
+        
+        2 Si le moment souhaité est le 2ème (variance), la fonction prendra les m matrices moyennes et calculera somme((Xi-E(X))^2)/N 
+            > La fonction retournera une matrice de m colonnes (m nombre de mois) et l lignes (l nombre de pixels) avec pour chaque pixels, 
+                on l'accorde la variance associé a chaque mois sur les années (observations)
+        
+        3 Si le moment souhaité est le 3ème (Skewness), la fonction calculera la matrice Somme((Xi-E(X))^3)/sd^3*(N-1) (N est le nombre des années, Xi sont les observations d'un mois sur des années, X est la moyenne des observations)
+            > La fonction retournera une matrice qui contient le skewness associé da chaque pixels de chaque mois sur les observations des années
+        
+        4 Si le moment souhaité est le 4ème (Kustosis), la fonction calculera la matrice N*Somme((Xi-E(X))^4)/Somme((Xi-E(X)^2)^2) (N est le nombre des années, Xi sont les observations d'un mois sur des années, X est la moyenne des observations)
+            > La fonction retournera une matrice qui contient le kurtosis associé da chaque pixels de chaque mois sur les observations des années itérés.
+    
+    2) Si on veut les moments sur les observations moyennes de chaque années; le 1er paramètre all=True : 
+        > 1 Si on veut une matrice contenant la moyenne des mois, auquel chaque mois on en calcul sa moyenne.
+        > 2 Si on veut une matrice contenant la variance des mois par rapport a la moyenne.
+        > 3 Si on veut une matrice contenant la skewness.
+        > 4 Si on veut la kurtosis.
     """
     values = np.array([]) # le tableau qui va contenir les distances
     result = np.array([]) # le tableau qui va contenir le moment de tout les pixels 
@@ -74,7 +88,7 @@ def get_E_ndvi(all=False, moment=1):
             else:
                 result = np.vstack((result, new.flatten()))
         
-        elif moment==2:
+        elif moment==2 and not all:
 
             # on calcul la variance
             new = new.flatten()
@@ -87,7 +101,7 @@ def get_E_ndvi(all=False, moment=1):
                 result=np.array(np.sum(s, axis=1))
             else:
                 result = np.vstack((result, np.sum(s, axis=1)))
-        elif moment==3:
+        elif moment==3 and not all:
 
             # on calcul Skewness
             new = new.flatten()
@@ -102,7 +116,7 @@ def get_E_ndvi(all=False, moment=1):
                 result=np.array(skew)
             else:
                 result = np.vstack((result, skew))
-        elif moment==4:
+        elif moment==4 and not all:
     
             # on calcul kurtosis
             new = new.flatten()
@@ -168,7 +182,7 @@ def generate_colors(colors_range, momentum, ref=np.array([0,0,0,0,0,0])):
 
 
 #arr = d(get_E_ndvi(1)[0], np.array([0.0584 for v in range(5)])).reshape(856,1089)
-print(get_E_ndvi(True, 4))
+print(get_E_ndvi(False, 4))
 #fig, ax = plt.subplots()
 #plot_bands(arr, cmap='rainbow', ax=ax)
 #plt.show()
