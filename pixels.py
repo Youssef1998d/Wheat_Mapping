@@ -74,7 +74,7 @@ def get_E_ndvi(all=False, moment=1):
                 new = arr     
 
             else:
-                # sinon on additionne a new arr par une simple addition matricielle
+                # sinon, il s'agit d'un calcul d'espérance on additionne a new arr par une simple addition matricielle
                 new += arr
         
         # après avoir itérer toutes les années d'un mois donnée, on calcul le moment   
@@ -90,28 +90,16 @@ def get_E_ndvi(all=False, moment=1):
         
         elif moment==2 and not all:
 
-            # on calcul la variance
-            new = new.flatten()
-            ob = ob.transpose()
-            mean = np.repeat(new[np.newaxis, :],len(years), axis=0 )
-            mean = mean.transpose()
-            s = ob-mean
-            s = s**2/4
+            # on ajoute a result la variance
             if len(result)==0:
-                result=np.array(np.sum(s, axis=1))
+                result=np.array(np.sum((ob.transpose()-np.repeat(new.flatten()[np.newaxis, :],len(years), axis=0 ).transpose())**2/4, axis=1))
             else:
-                result = np.vstack((result, np.sum(s, axis=1)))
+                result = np.vstack((result, np.sum((ob.transpose()-np.repeat(new.flatten()[np.newaxis, :],len(years), axis=0 ).transpose())**2/4, axis=1)))
+        
         elif moment==3 and not all:
 
             # on calcul Skewness
-            new = new.flatten()
-            ob = ob.transpose()
-            mean = np.repeat(new[np.newaxis, :],len(years), axis=0 )
-            mean = mean.transpose()
-            s = np.sum((ob-mean)**2/len(years), axis=1)
-            sd = np.sqrt(s)
-            #print("s",s, "\nsd", sd**3 * len(years)-1)
-            skew = np.sum((ob-mean)**3, axis=1)/(len(years)-1)*sd**3
+            skew = np.sum((ob.transpose()-np.repeat(new.flatten()[np.newaxis, :],len(years), axis=0 ).transpose())**3, axis=1)/(len(years)-1)*np.sqrt(np.sum((ob.transpose()-np.repeat(new.flatten()[np.newaxis, :],len(years), axis=0 ).transpose())**2/len(years), axis=1))**3
             if len(result)==0:
                 result=np.array(skew)
             else:
@@ -119,13 +107,7 @@ def get_E_ndvi(all=False, moment=1):
         elif moment==4 and not all:
     
             # on calcul kurtosis
-            new = new.flatten()
-            ob = ob.transpose()
-            mean = np.repeat(new[np.newaxis, :],len(years), axis=0 )
-            mean = mean.transpose()
-            s = np.sum((ob-mean)**4, axis=1)
-            st = np.sum((ob-mean**2)**2, axis=1)
-            kurtosis = (s/st)*len(years)
+            kurtosis = (np.sum((ob.transpose()-np.repeat(new.flatten()[np.newaxis, :],len(years), axis=0 ).transpose())**4, axis=1)/np.sum((ob.transpose()-np.repeat(new.flatten()[np.newaxis, :],len(years), axis=0 ).transpose()**2)**2, axis=1))*len(years)
             if len(result)==0:
                 result=np.array(kurtosis)
             else:
@@ -181,10 +163,9 @@ def generate_colors(colors_range, momentum, ref=np.array([0,0,0,0,0,0])):
     return result
 
 
-#arr = d(get_E_ndvi(1)[0], np.array([0.0584 for v in range(5)])).reshape(856,1089)
-print(get_E_ndvi(False, 4))
-#fig, ax = plt.subplots()
-#plot_bands(arr, cmap='rainbow', ax=ax)
-#plt.show()
+arr = d(get_E_ndvi(False, 1)[0], np.array([0.1, 0.23, 0.8, 0.66, 0.35])).reshape(856,1089)
+fig, ax = plt.subplots()
+plot_bands(arr, cmap='rainbow', ax=ax)
+plt.show()
 
 
