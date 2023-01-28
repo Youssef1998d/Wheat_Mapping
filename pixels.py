@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-path = "C:/Users/lenovo/Desktop/Assets/NDVI/Wheat_Mapping/data_ndvi_images/data_ndvi_images/zimbabwe/"
+path = "C:/Users/lenovo/Desktop/Assets/NDVI/Wheat_Mapping/data_ndvi_images/data_ndvi_images/bouselem/"
 
-years = ["2018", "2019", "2020", "2021"]
+years = ["2017", "2018", "2022"]
 months = [str(i) for i in (5, 6, 7, 8, 9)]
 colors = [(255, 0, 0), (240, 50, 0), (200, 100, 0), (255, 200, 0), (0, 255, 0), (0, 55, 200), (0, 0, 255), (0,0,100), (0,0,0)]
 def get_E_ndvi(all=False, moment=1):
@@ -162,10 +162,51 @@ def generate_colors(colors_range, momentum, ref=np.array([0,0,0,0,0,0])):
         result.append(colors_dictionary[c])
     return result
 
+skew = lambda arr: np.sum((np.array(arr-[np.mean(arr) for x in arr]))**3)/((len(arr)-1)*np.sqrt(np.var(arr))**3)
+kurtosis = lambda arr: (np.sum((np.array([np.mean(arr) for x in arr])-arr)**4)/np.sum(arr-(np.array([np.mean(arr) for x in arr])**2)**2))/len(arr)
+ref = np.array([0.2, 0.35, 0.8, 0.66, 0.25])
+var = np.var(ref)
+skew = skew(ref)
+kurtosis = kurtosis(ref)
+print(kurtosis)
+print(get_E_ndvi(True, 4)[0])
+moment_4 = ((get_E_ndvi(True, 4)[0]-kurtosis)**2).reshape(746,1578)
+moment_3 = ((get_E_ndvi(True, 3)[0]-skew)**2).reshape(746,1578)
+moment_2 = ((get_E_ndvi(True, 2)[0]-var)**2).reshape(746,1578)
+moment_1 = d(get_E_ndvi(False,1)[0],ref).reshape(746,1578)
 
-arr = d(get_E_ndvi(False, 1)[0], np.array([0.1, 0.23, 0.8, 0.66, 0.35])).reshape(856,1089)
+def get_index(momentum, values, tolerance):
+    for i in range(len(momentum)):
+        yield np.where(np.isclose(momentum[i], values[i], tolerance[i]))
+momentum = [moment_1, moment_2, moment_3, moment_4]
+values =  [0.4, 0.002, 0.2399, 0.00004]
+tolerance = [0.05, 0.0005, 0.0005, 0.000005] 
+# par exemple pour le 1er moment la distance doit etre entre 0.35 et 0.45
+for x in get_index(momentum, values, tolerance):
+    print(x)
 fig, ax = plt.subplots()
-plot_bands(arr, cmap='rainbow', ax=ax)
+
+
+
+fig = plt.figure(1)
+fig.subplots_adjust(hspace=0.4, top=0.85)
+fig.suptitle("Les 4 indicateurs")
+moment = ("Variance", "Skewness", "Kurtosis", "Mean")
+ax1 = fig.add_subplot(2, 2, 1)
+ax1.set_title(moment[0])
+plot_bands(moment_2, cmap='rainbow', ax=ax1, vmin=0.0015)
+ax2 = fig.add_subplot(2, 2, 2)
+ax2.set_title(moment[1])
+plot_bands(moment_3, cmap='rainbow', ax=ax2, vmin=0.2399)
+ax3 = fig.add_subplot(2, 2, 3)
+ax3.set_title(moment[2])
+plot_bands(moment_4, cmap='rainbow', ax=ax3, vmax=0.00005)
+ax4 = fig.add_subplot(2, 2, 4)
+ax4.set_title(moment[3])
+plot_bands(moment_1, cmap='rainbow', ax=ax4, vmax=1)
 plt.show()
+
+#plot_bands(arr, cmap='Reds', ax=ax)
+#plt.show()
 
 
